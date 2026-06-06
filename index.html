@@ -4,7 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="theme-color" content="#0D0D1A">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
 <title>Presupuesto Personal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -437,6 +439,24 @@ textarea.f-input{resize:none;height:76px;font-family:'DM Sans',sans-serif;font-s
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Global stubs so onclick attrs work before module loads -->
+<script>
+  window._modalQueue = [];
+  window.openModal  = id => { const el = document.getElementById(id); if(el) el.classList.add('open'); };
+  window.closeModal = id => { const el = document.getElementById(id); if(el) el.classList.remove('open'); };
+  window.showFirebaseHelp = () => window.openModal('modal-help');
+  window.switchTab = () => {};      // overridden by module
+  window.setType = () => {};
+  window.syncData = () => {};
+  window.guardarMovimiento = () => {};
+  window.guardarDeuda = () => {};
+  window.guardarSub = () => {};
+  window.guardarFijo = () => {};
+  window.guardarLimite = () => {};
+  window.saveFirebaseConfig = () => {};
+  window.skipSetup = () => {};
+</script>
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
