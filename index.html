@@ -468,23 +468,41 @@ let DB = null, USE_FB = false;
 let CUR_TYPE = 'ingreso';
 let YEAR, MONTH, MES_KEY;
 
+// CATS: cada entrada tiene key (Firebase-safe) y label (display)
+const CATS_GASTO = [
+  {key:'alimentacion',  label:'🍽️ Alimentación'},
+  {key:'transporte',    label:'🚌 Transporte'},
+  {key:'ropa',          label:'👕 Ropa y Personal'},
+  {key:'salud',         label:'💊 Salud'},
+  {key:'suscripciones', label:'📱 Suscripciones'},
+  {key:'entretenimiento',label:'🎮 Entretenimiento'},
+  {key:'gasolina',      label:'⛽ Gasolina'},
+  {key:'educacion',     label:'🎓 Educación'},
+  {key:'iglesia',       label:'🙏 Iglesia y Diezmo'},
+  {key:'imprevistos',   label:'🆘 Imprevistos'},
+  {key:'otros',         label:'Otros'},
+];
+// Helper: key→label y label→key
+const catLabel = (key) => { const c=CATS_GASTO.find(x=>x.key===key); return c?c.label:key; };
+const catKey   = (lbl) => { const c=CATS_GASTO.find(x=>x.label===lbl||x.key===lbl); return c?c.key:lbl; };
+
 const CATS = {
   ingreso:['Sueldo principal','Sueldo colegio','Ingresos extras','Freelance','Otros'],
-  gasto:  ['🍽️ Alimentación','🚌 Transporte','👕 Ropa / Personal','💊 Salud','📱 Suscripciones',
-            '🎮 Entretenimiento','⛽ Gasolina','🎓 Educación','🙏 Iglesia / Diezmo','🆘 Imprevistos','Otros'],
+  gasto:  CATS_GASTO.map(c=>c.key),   // guardamos keys en Firebase
   pago:   []
 };
 
 const DEF_FIJOS = [
-  {nombre:'Alquiler / Vivienda',monto:850},
-  {nombre:'Préstamo bancario',monto:1316.77},
-  {nombre:'Cuchubal / Ahorro',monto:500},
+  {nombre:'Alquiler',monto:850},
+  {nombre:'Prestamo bancario',monto:1316.77},
+  {nombre:'Cuchubal Ahorro',monto:500},
   {nombre:'Plan celular Tigo',monto:135},
 ];
+// DEF_LIMS: keys limpias (sin emojis, sin caracteres especiales)
 const DEF_LIMS = {
-  '🍽️ Alimentación':800,'🚌 Transporte':200,'👕 Ropa / Personal':150,
-  '💊 Salud':100,'📱 Suscripciones':80,'🎮 Entretenimiento':100,
-  '⛽ Gasolina':150,'🎓 Educación':50,'🙏 Iglesia / Diezmo':600,'🆘 Imprevistos':200
+  alimentacion:800, transporte:200, ropa:150,
+  salud:100, suscripciones:80, entretenimiento:100,
+  gasolina:150, educacion:50, iglesia:600, imprevistos:200
 };
 const DEF_DEUDAS = [
   {nombre:'Visacuotas / TC',saldo:8000,cuota:1146.49,tipo:'cuota',pagado:0},
@@ -648,8 +666,8 @@ async function renderDash(){
       return `<div class="row-item">
         <div class="row-icon" style="background:${cMap[m.tipo]}">${iMap[m.tipo]}</div>
         <div class="row-body">
-          <div class="row-name">${m.desc||m.categoria||'—'}</div>
-          <div class="row-sub">${m.categoria||''} · ${f}</div>
+          <div class="row-name">${m.desc||catLabel(m.categoria)||'—'}</div>
+          <div class="row-sub">${catLabel(m.categoria)||''} · ${f}</div>
         </div>
         <div class="row-amt ${cls}">${s}${fQ(m.monto)}</div>
       </div>`;
@@ -663,7 +681,7 @@ async function renderDash(){
     bEl.innerHTML=Object.entries(lims).slice(0,5).map(([cat,lim])=>{
       const g=gpc[cat]||0;const p=Math.min(pct(g,lim),100);
       const c=p>=100?'var(--red)':p>=80?'var(--yellow)':'var(--green)';
-      return `<div class="pw"><div class="pl"><span>${cat}</span><strong>${fQ(g)} / ${fQ(lim)}</strong></div><div class="pb"><div class="pf" style="width:${p}%;background:${c}"></div></div></div>`;
+      return `<div class="pw"><div class="pl"><span>${catLabel(cat)}</span><strong>${fQ(g)} / ${fQ(lim)}</strong></div><div class="pb"><div class="pf" style="width:${p}%;background:${c}"></div></div></div>`;
     }).join('');
   } else {
     bEl.innerHTML='<div class="empty"><p>Sin categorías configuradas</p></div>';
@@ -687,8 +705,13 @@ window.setType = function(tipo){
 
 function populateCats(){
   const sel=document.getElementById('r-cat');
-  sel.innerHTML='<option value="">Seleccionar...</option>'+
-    (CATS[CUR_TYPE]||[]).map(c=>`<option value="${c}">${c}</option>`).join('');
+  if(CUR_TYPE==='gasto'){
+    sel.innerHTML='<option value="">Seleccionar...</option>'+
+      CATS_GASTO.map(c=>`<option value="${c.key}">${c.label}</option>`).join('');
+  } else {
+    sel.innerHTML='<option value="">Seleccionar...</option>'+
+      (CATS[CUR_TYPE]||[]).map(c=>`<option value="${c}">${c}</option>`).join('');
+  }
 }
 
 async function populateDeudaSel(){
@@ -767,11 +790,11 @@ async function renderVariables(){
     const g=gpc[cat]||0;const p=Math.min(pct(g,lim),100);
     const c=p>=100?'var(--red)':p>=80?'var(--yellow)':'var(--green)';
     const b=p>=100?'<span class="badge br">🚨 EXCEDIDO</span>':p>=80?'<span class="badge by">⚠️ Cerca</span>':'<span class="badge bg">✅ OK</span>';
-    return `<div class="pw"><div class="pl"><span>${cat} ${b}</span><strong>${fQ(g)} / ${fQ(lim)}</strong></div><div class="pb"><div class="pf" style="width:${p}%;background:${c}"></div></div></div>`;
+    return `<div class="pw"><div class="pl"><span>${catLabel(cat)} ${b}</span><strong>${fQ(g)} / ${fQ(lim)}</strong></div><div class="pb"><div class="pf" style="width:${p}%;background:${c}"></div></div></div>`;
   }).join('');
-  // Populate modal select
+  // Populate modal select with labels displayed, keys as values
   const mv=document.getElementById('mv-cat');
-  mv.innerHTML=Object.keys(lims).map(c=>`<option value="${c}">${c}</option>`).join('');
+  mv.innerHTML=Object.keys(lims).map(k=>`<option value="${k}">${catLabel(k)}</option>`).join('');
 }
 
 // ─── DEUDAS ───────────────────────────────────────
