@@ -162,8 +162,8 @@ textarea.f-input{resize:none;height:76px;font-family:'DM Sans',sans-serif;font-s
 </head>
 <body>
 
-<!-- SETUP -->
-<div id="setup-screen">
+<!-- SETUP (oculto — Firebase URL ya configurada) -->
+<div id="setup-screen" class="hidden">
   <div class="setup-logo">₿udget <span>personal</span></div>
   <div class="setup-card">
     <h2>Conectar Firebase</h2>
@@ -935,12 +935,9 @@ function showToast(msg,type='success'){
 }
 
 // ─── BOOT ─────────────────────────────────────────
-(function boot(){
-  const saved=LS.get('fb_url');
-  const skip=LS.get('skip_fb');
-  if(saved&&saved!=='null') initFB(saved);
-  else if(skip) launchApp();
-})();
+// Firebase URL fija — no requiere configuración
+const FB_URL = 'https://presupuesto-d96a4-default-rtdb.firebaseio.com';
+(function boot(){ initFB(FB_URL); })();
 </script>
 </body>
 </html>
